@@ -119,5 +119,6 @@
     <string name="supplier_phone_title">Supplier Phone</string>
     <string name="supplier_name_hint">Candy Supplier GmbH</string>
     <string name="supplier_name_title">Supplier Name</string>
+    <string name="sale_button">Sale</string>
 
 </resources>

@@ -23,10 +23,12 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
     private static final int INVENTORY_LOADER =0;
 
     InventoryCursorAdapter mCursorAdapter;
+    InventoryDbHelper dbHelper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_catalog);
+        dbHelper = new InventoryDbHelper(this);
 
         final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -82,7 +84,10 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         values.put(InventoryEntry.COLUMN_INVENTORY_NAME, "Toto");
         values.put(InventoryEntry.COLUMN_INVENTORY_PRICE, 30);
         values.put(InventoryEntry.COLUMN_INVENTORY_QUANTITY, 7);
-
+        values.put(InventoryEntry.COLUMN_SUPPLIER_NAME, "Char");
+        values.put(InventoryEntry.COLUMN_SUPPLIER_PHONE, "3087881653");
+        values.put(InventoryEntry.COLUMN_SUPPLIER_EMAIL, "hhee@gmail.com");
+        values.put(InventoryEntry.COLUMN_INVENTORY_IMAGE , "drawable/empty.jpeg");
         // Insert a new row for Toto into the provider using the ContentResolver.
         // Use the {@link PetEntry#CONTENT_URI} to indicate that we want to insert
         // into the pets database table.
@@ -95,7 +100,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
      */
     private void deleteAllInventories() {
         int rowsDeleted = getContentResolver().delete(InventoryEntry.CONTENT_URI, null, null);
-        Log.v("CatalogActivity", rowsDeleted + " rows deleted from pet database");
+        Log.v("CatalogActivity", rowsDeleted + " rows deleted from inventory database");
     }
 
     @Override
@@ -106,6 +111,10 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         return true;
     }
 
+    protected void onResume() {
+        super.onResume();
+        mCursorAdapter.swapCursor(dbHelper.readStock());
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // User clicked on a menu option in the app bar overflow menu
@@ -131,6 +140,9 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
                 InventoryEntry.COLUMN_INVENTORY_PRICE,
                 InventoryEntry.COLUMN_INVENTORY_QUANTITY,
                 InventoryEntry.COLUMN_INVENTORY_IMAGE,
+                InventoryEntry.COLUMN_SUPPLIER_NAME ,
+                InventoryEntry.COLUMN_SUPPLIER_PHONE ,
+                InventoryEntry.COLUMN_SUPPLIER_EMAIL
 
         };
 
@@ -153,6 +165,17 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
     public void onLoaderReset(Loader<Cursor> loader) {
         // Callback called when the data needs to be deleted
         mCursorAdapter.swapCursor(null);
+    }
+
+    public void clickOnViewItem(long id) {
+        Intent intent = new Intent(this, EditorActivity.class);
+        intent.putExtra("itemId", id);
+        startActivity(intent);
+    }
+
+    public void clickOnSale(long id, int quantity) {
+        dbHelper.sellOneItem(id, quantity);
+        mCursorAdapter.swapCursor(dbHelper.readStock());
     }
 
 }

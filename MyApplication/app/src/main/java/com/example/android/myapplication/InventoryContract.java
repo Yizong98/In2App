@@ -91,6 +91,10 @@ public final class InventoryContract {
 
         public final static String COLUMN_INVENTORY_IMAGE = "image";
 
+        public static final String COLUMN_SUPPLIER_NAME = "supplier_name";
+        public static final String COLUMN_SUPPLIER_PHONE = "supplier_phone";
+        public static final String COLUMN_SUPPLIER_EMAIL = "supplier_email";
+
         /**
          * Weight of the pet.
          *

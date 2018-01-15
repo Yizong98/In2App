@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.Loader;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,6 +31,7 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 import com.example.android.myapplication.InventoryContract.InventoryEntry;
+
 /**
  * Created by ceoyi on 12/28/2017.
  */
@@ -48,6 +50,10 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     /** EditText field to enter the pet's breed */
     private EditText mPriceEditText;
+
+    EditText supplierNameEdit;
+    EditText supplierPhoneEdit;
+    EditText supplierEmailEdit;
 
     ImageButton decreaseQuantity = (ImageButton) findViewById(R.id.decrease_quantity);
     ImageButton increaseQuantity = (ImageButton) findViewById(R.id.increase_quantity);
@@ -87,6 +93,9 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         mPriceEditText = (EditText) findViewById(R.id.price_edit);
         mQuantityEditText = (EditText) findViewById(R.id.quantity_edit);
         imageView= (ImageView) findViewById(R.id.image_view);
+        EditText supplierNameEdit=findViewById(R.id.supplier_name_edit);
+        EditText supplierPhoneEdit=findViewById(R.id.supplier_phone_edit);
+        EditText supplierEmailEdit=findViewById(R.id.supplier_email_edit);
 
         // Setup OnTouchListeners on all the input fields, so we can determine if the user
         // has touched or modified them. This will let us know if there are unsaved changes
@@ -94,6 +103,9 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         mNameEditText.setOnTouchListener(mTouchListener);
         mPriceEditText.setOnTouchListener(mTouchListener);
         mQuantityEditText.setOnTouchListener(mTouchListener);
+        supplierNameEdit.setOnTouchListener(mTouchListener);
+        supplierPhoneEdit.setOnTouchListener(mTouchListener);
+        supplierEmailEdit.setOnTouchListener(mTouchListener);
 
         // Examine the intent that was used to launch this activity,
         // in order to figure out if we're creating a new pet or editing an existing one.
@@ -171,6 +183,76 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         mQuantityEditText.setText(String.valueOf(previousValue + 1));
     }
 
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu options from the res/menu/menu_editor.xml file.
+        // This adds menu items to the app bar.
+        getMenuInflater().inflate(R.menu.menu_editor, menu);
+        return true;
+    }
+
+    /**
+     * This method is called after invalidateOptionsMenu(), so that the
+     * menu can be updated (some menu items can be hidden or made visible).
+     */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+        // If this is a new pet, hide the "Delete" menu item.
+        if (mCurrentUri == null) {
+            MenuItem deleteOneItemMenuItem = menu.findItem(R.id.action_delete_item);
+            MenuItem deleteAllMenuItem = menu.findItem(R.id.action_delete_all_data);
+            MenuItem orderMenuItem = menu.findItem(R.id.action_order);
+            deleteOneItemMenuItem.setVisible(false);
+            deleteAllMenuItem.setVisible(false);
+            orderMenuItem.setVisible(false);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // User clicked on a menu option in the app bar overflow menu
+        switch (item.getItemId()) {
+            // Respond to a click on the "Save" menu option
+            case R.id.action_save:
+                // Save pet to database
+                saveInventory();
+                // Exit activity
+                finish();
+                return true;
+            // Respond to a click on the "Delete" menu option
+            case R.id.action_delete_item:
+                // Pop up confirmation dialog for deletion
+                showDeleteConfirmationDialog();
+                return true;
+            // Respond to a click on the "Up" arrow button in the app bar
+            case android.R.id.home:
+                // If the pet hasn't changed, continue with navigating up to parent activity
+                // which is the {@link CatalogActivity}.
+                if (!mInventoryHasChanged) {
+                    NavUtils.navigateUpFromSameTask(EditorActivity.this);
+                    return true;
+                }
+
+                // Otherwise if there are unsaved changes, setup a dialog to warn the user.
+                // Create a click listener to handle the user confirming that
+                // changes should be discarded.
+                DialogInterface.OnClickListener discardButtonClickListener =
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                // User clicked "Discard" button, navigate to parent activity.
+                                NavUtils.navigateUpFromSameTask(EditorActivity.this);
+                            }
+                        };
+
+                // Show a dialog that notifies the user they have unsaved changes
+                showUnsavedChangesDialog(discardButtonClickListener);
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     public void tryToOpenImageSelector() {
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -195,6 +277,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
     }
 
+    
 
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -209,6 +292,19 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             }
         }
     }
+
+
+
+    private boolean checkIfValueSet(EditText text, String description) {
+        if (TextUtils.isEmpty(text.getText())) {
+            text.setError("Missing product " + description);
+            return false;
+        } else {
+            text.setError(null);
+            return true;
+        }
+    }
+
 
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
         // The ACTION_OPEN_DOCUMENT intent was sent with the request code READ_REQUEST_CODE.
@@ -237,14 +333,17 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         String nameString = mNameEditText.getText().toString().trim();
         String priceString = mPriceEditText.getText().toString().trim();
         String quantityString = mQuantityEditText.getText().toString().trim();
-        String imaUri = imageUri.toString();
+        String supplierNameString = supplierNameEdit.getText().toString().trim();
+        String supplierEmailString = supplierEmailEdit.getText().toString().trim();
+        String supplierPhoneString = supplierPhoneEdit.getText().toString().trim();
+        String imageuri = imageUri.toString();
 
 
         // Check if this is supposed to be a new pet
         // and check if all the fields in the editor are blank
         if (mCurrentUri == null &&
                 TextUtils.isEmpty(nameString) && TextUtils.isEmpty(quantityString) &&
-                TextUtils.isEmpty(priceString) && imageUri == null && TextUtils.isEmpty(imaUri)) {
+                TextUtils.isEmpty(priceString) && imageUri == null && TextUtils.isEmpty(imageuri)&&TextUtils.isEmpty(supplierNameString)&&TextUtils.isEmpty(supplierPhoneString)&&TextUtils.isEmpty(supplierEmailString)) {
             // Since no fields were modified, we can return early without creating a new pet.
             // No need to create ContentValues and no need to do any ContentProvider operations.
             return;
@@ -255,7 +354,11 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         ContentValues values = new ContentValues();
         values.put(InventoryEntry.COLUMN_INVENTORY_NAME, nameString);
         values.put(InventoryEntry.COLUMN_INVENTORY_PRICE, priceString);
-        values.put(InventoryEntry.COLUMN_INVENTORY_IMAGE, imaUri);
+        values.put(InventoryEntry.COLUMN_INVENTORY_IMAGE, imageuri);
+        values.put(InventoryEntry.COLUMN_SUPPLIER_NAME, supplierNameString);
+        values.put(InventoryEntry.COLUMN_SUPPLIER_PHONE, supplierPhoneString);
+        values.put(InventoryEntry.COLUMN_SUPPLIER_EMAIL, supplierEmailString);
+
         // If the weight is not provided by the user, don't try to parse the string into an
         // integer value. Use 0 by default.
         int quantity = 0;
@@ -301,76 +404,12 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu options from the res/menu/menu_editor.xml file.
-        // This adds menu items to the app bar.
-        getMenuInflater().inflate(R.menu.menu_editor, menu);
-        return true;
-    }
 
-    /**
-     * This method is called after invalidateOptionsMenu(), so that the
-     * menu can be updated (some menu items can be hidden or made visible).
-     */
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        super.onPrepareOptionsMenu(menu);
-        // If this is a new pet, hide the "Delete" menu item.
-        if (mCurrentUri == null) {
-            MenuItem menuItem = menu.findItem(R.id.action_delete);
-            menuItem.setVisible(false);
-        }
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // User clicked on a menu option in the app bar overflow menu
-        switch (item.getItemId()) {
-            // Respond to a click on the "Save" menu option
-            case R.id.action_save:
-                // Save pet to database
-                saveInventory();
-                // Exit activity
-                finish();
-                return true;
-            // Respond to a click on the "Delete" menu option
-            case R.id.action_delete:
-                // Pop up confirmation dialog for deletion
-                showDeleteConfirmationDialog();
-                return true;
-            // Respond to a click on the "Up" arrow button in the app bar
-            case android.R.id.home:
-                // If the pet hasn't changed, continue with navigating up to parent activity
-                // which is the {@link CatalogActivity}.
-                if (!mInventoryHasChanged) {
-                    NavUtils.navigateUpFromSameTask(EditorActivity.this);
-                    return true;
-                }
-
-                // Otherwise if there are unsaved changes, setup a dialog to warn the user.
-                // Create a click listener to handle the user confirming that
-                // changes should be discarded.
-                DialogInterface.OnClickListener discardButtonClickListener =
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                // User clicked "Discard" button, navigate to parent activity.
-                                NavUtils.navigateUpFromSameTask(EditorActivity.this);
-                            }
-                        };
-
-                // Show a dialog that notifies the user they have unsaved changes
-                showUnsavedChangesDialog(discardButtonClickListener);
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     /**
      * This method is called when the back button is pressed.
      */
-    @Override
+
     public void onBackPressed() {
         // If the pet hasn't changed, continue with handling back button press
         if (!mInventoryHasChanged) {
@@ -540,6 +579,20 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     }
 
 
+    InventoryDbHelper dbHelper = new InventoryDbHelper(this);
+    private int deleteAllRowsFromTable() {
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
+        return database.delete(InventoryEntry.TABLE_NAME, null, null);
+    }
+
+    private int deleteOneItemFromTable(long itemId) {
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
+        String selection = InventoryEntry._ID + "=?";
+        String[] selectionArgs = { String.valueOf(itemId) };
+        int rowsDeleted = database.delete(
+                InventoryEntry.TABLE_NAME, selection, selectionArgs);
+        return rowsDeleted;
+    }
 
 
 
