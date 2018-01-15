@@ -3,40 +3,40 @@ package com.example.android.myapplication;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-import com.example.android.myapplication.InventoryContract.InventoryEntry;
+
 /**
  * Created by ceoyi on 12/28/2017.
  */
 
 public class InventoryCursorAdapter extends CursorAdapter {
 
-    private  CatalogActivity activity;
+    private CatalogActivity activity;
 
     public InventoryCursorAdapter(CatalogActivity context, Cursor c) {
         super(context, c, 0);
         this.activity = context;
-    }
-    public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        // Inflate a list item view using the layout specified in list_item.xml
-        return LayoutInflater.from(context).inflate(R.layout.list_item, parent, false);
     }
 
     /**
      * This method binds the pet data (in the current row pointed to by cursor) to the given
      * list item layout. For example, the name for the current pet can be set on the name TextView
      * in the list item layout.
-     *
      */
     public InventoryCursorAdapter(Context context, Cursor c) {
         super(context, c, 0 /* flags */);
     }
+
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        // Inflate a list item view using the layout specified in list_item.xml
+        return LayoutInflater.from(context).inflate(R.layout.list_item, parent, false);
+    }
+
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         // Find individual views that we want to modify in the list item layout
@@ -74,7 +74,7 @@ public class InventoryCursorAdapter extends CursorAdapter {
             }
         });
     }
-    }
+}
 
 
 

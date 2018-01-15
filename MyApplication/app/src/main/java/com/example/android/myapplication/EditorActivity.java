@@ -44,6 +44,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     /** Content URI for the existing Inventory (null if it's a new Inventory) */
     private Uri mCurrentUri;
+    long currentItemId;
 
     /** EditText field to enter the Inventory's name */
     private EditText mNameEditText;
@@ -115,23 +116,17 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         Intent intent = getIntent();
         mCurrentUri = intent.getData();
 
+        currentItemId = getIntent().getLongExtra("itemId", 0);
         // If the intent DOES NOT contain a Inventory content URI, then we know that we are
         // creating a new Inventory.
-        if (mCurrentUri == null) {
-            // This is a new Inventory, so change the app bar to say "Add a Inventory"
-            setTitle(getString(R.string.editor_activity_title_new_inventory));
 
-            // Invalidate the options menu, so the "Delete" menu option can be hidden.
-            // (It doesn't make sense to delete a Inventory that hasn't been created yet.)
-            invalidateOptionsMenu();
+        if (currentItemId == 0) {
+            setTitle(getString(R.string.editor_activity_title_new_item));
         } else {
-            // Otherwise this is an existing Inventory, so change app bar to say "Edit Inventory"
-            setTitle(getString(R.string.editor_activity_title_edit_inventory));
-
-            // Initialize a loader to read the Inventory data from the database
-            // and display the current values in the editor
-            getLoaderManager().initLoader(EXISTING_INVENTORY_LOADER, null, this);
+            setTitle(getString(R.string.editor_activity_title_edit_item));
+            addValuesToEditItem(currentItemId);
         }
+
 
 
         decreaseQuantity.setOnClickListener(new View.OnClickListener() {
@@ -202,7 +197,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     public boolean onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
         // If this is a new Inventory, hide the "Delete" menu item.
-        if (mCurrentUri == null) {
+        if (currentItemId == 0) {
             MenuItem deleteOneItemMenuItem = menu.findItem(R.id.action_delete_item);
             MenuItem deleteAllMenuItem = menu.findItem(R.id.action_delete_all_data);
             MenuItem orderMenuItem = menu.findItem(R.id.action_order);
@@ -213,21 +208,36 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         return true;
     }
 
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // User clicked on a menu option in the app bar overflow menu
         switch (item.getItemId()) {
             // Respond to a click on the "Save" menu option
+            case R.id.action_order:
+                // dialog with phone and email
+                showOrderConfirmationDialog();
+                return true;
+
             case R.id.action_save:
+                if (!addItemToDb()) {
+                    // saying to onOptionsItemSelected that user clicked button
+                    return true;
+
+                }
                 // Save Inventory to database
-                saveInventory();
                 // Exit activity
+
                 finish();
                 return true;
             // Respond to a click on the "Delete" menu option
             case R.id.action_delete_item:
                 // Pop up confirmation dialog for deletion
-                showDeleteConfirmationDialog();
+                showDeleteConfirmationDialog(currentItemId);
+                return true;
+            case R.id.action_delete_all_data:
+                //delete all data
+                showDeleteConfirmationDialog(0);
                 return true;
             // Respond to a click on the "Up" arrow button in the app bar
             case android.R.id.home:
@@ -237,6 +247,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                     NavUtils.navigateUpFromSameTask(EditorActivity.this);
                     return true;
                 }
+
 
                 // Otherwise if there are unsaved changes, setup a dialog to warn the user.
                 // Create a click listener to handle the user confirming that
@@ -257,6 +268,71 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         return super.onOptionsItemSelected(item);
     }
 
+    private boolean addItemToDb() {
+        boolean isAllOk = true;
+        if (!checkIfValueSet(mNameEditText, "name")) {
+            isAllOk = false;
+        }
+        if (!checkIfValueSet(mPriceEditText, "price")) {
+            isAllOk = false;
+        }
+        if (!checkIfValueSet(mQuantityEditText, "quantity")) {
+            isAllOk = false;
+        }
+        if (!checkIfValueSet(supplierNameEdit, "supplier name")) {
+            isAllOk = false;
+        }
+        if (!checkIfValueSet(supplierPhoneEdit, "supplier phone")) {
+            isAllOk = false;
+        }
+        if (!checkIfValueSet(supplierEmailEdit, "supplier email")) {
+            isAllOk = false;
+        }
+        if (imageUri == null && currentItemId == 0) {
+            isAllOk = false;
+            imageBtn.setError("Missing image");
+        }
+        if (!isAllOk) {
+            return false;
+        }
+        if (currentItemId == 0) {
+            saveInventory();
+        } else {
+            int quantity = Integer.parseInt(mQuantityEditText.getText().toString().trim());
+            dbHelper.updateItem(currentItemId, quantity);
+        }
+
+
+        return true;
+    }
+
+    private boolean checkIfValueSet(EditText text, String description) {
+        if (TextUtils.isEmpty(text.getText())) {
+            text.setError("Missing product " + description);
+            return false;
+        } else {
+            text.setError(null);
+            return true;
+        }
+    }
+
+    private void addValuesToEditItem(long itemId) {
+        Cursor cursor = dbHelper.readStock(itemId);
+        cursor.moveToFirst();
+        mNameEditText.setText(cursor.getString(cursor.getColumnIndex( InventoryEntry.COLUMN_INVENTORY_NAME)));
+        mPriceEditText.setText(cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_INVENTORY_PRICE)));
+        mQuantityEditText.setText(cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_INVENTORY_QUANTITY )));
+        supplierNameEdit.setText(cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_SUPPLIER_NAME)));
+        supplierPhoneEdit.setText(cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_SUPPLIER_PHONE)));
+        supplierEmailEdit.setText(cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_SUPPLIER_EMAIL)));
+        imageView.setImageURI(Uri.parse(cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_INVENTORY_IMAGE))));
+        mNameEditText.setEnabled(false);
+        mPriceEditText.setEnabled(false);
+        supplierNameEdit.setEnabled(false);
+        supplierPhoneEdit.setEnabled(false);
+        supplierEmailEdit.setEnabled(false);
+        imageBtn.setEnabled(false);
+    }
     public void tryToOpenImageSelector() {
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -330,9 +406,10 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         String supplierNameString = supplierNameEdit.getText().toString().trim();
         String supplierEmailString = supplierEmailEdit.getText().toString().trim();
         String supplierPhoneString = supplierPhoneEdit.getText().toString().trim();
-        String imageuri = imageUri.toString();
 
-
+        String imageString = "drawable/no_image.jpg";
+        if (imageUri!=null){
+            imageString = imageUri.toString();}
         // Check if this is supposed to be a new Inventory
         // and check if all the fields in the editor are blank
         if (mCurrentUri == null &&
@@ -348,7 +425,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         ContentValues values = new ContentValues();
         values.put(InventoryEntry.COLUMN_INVENTORY_NAME, nameString);
         values.put(InventoryEntry.COLUMN_INVENTORY_PRICE, priceString);
-        values.put(InventoryEntry.COLUMN_INVENTORY_IMAGE, imageuri);
+        values.put(InventoryEntry.COLUMN_INVENTORY_IMAGE, imageString);
         values.put(InventoryEntry.COLUMN_SUPPLIER_NAME, supplierNameString);
         values.put(InventoryEntry.COLUMN_SUPPLIER_PHONE, supplierPhoneString);
         values.put(InventoryEntry.COLUMN_SUPPLIER_EMAIL, supplierEmailString);
@@ -365,35 +442,17 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         if (mCurrentUri == null) {
             // This is a NEW Inventory, so insert a new Inventory into the provider,
             // returning the content URI for the new Inventory.
-            Uri newUri = getContentResolver().insert(InventoryEntry.CONTENT_URI, values);
+            getContentResolver().insert(InventoryEntry.CONTENT_URI, values);
 
             // Show a toast message depending on whether or not the insertion was successful.
-            if (newUri == null) {
-                // If the new content URI is null, then there was an error with insertion.
-                Toast.makeText(this, getString(R.string.editor_insert_inventory_failed),
-                        Toast.LENGTH_SHORT).show();
-            } else {
-                // Otherwise, the insertion was successful and we can display a toast.
-                Toast.makeText(this, getString(R.string.editor_insert_inventory_successful),
-                        Toast.LENGTH_SHORT).show();
-            }
+
         } else {
             // Otherwise this is an EXISTING Inventory, so update the Inventory with content URI: mCurrentInventoryUri
             // and pass in the new ContentValues. Pass in null for the selection and selection args
             // because mCurrentInventoryUri will already identify the correct row in the database that
             // we want to modify.
-            int rowsAffected = getContentResolver().update(mCurrentUri, values, null, null);
+            getContentResolver().update(mCurrentUri, values, null, null);
 
-            // Show a toast message depending on whether or not the update was successful.
-            if (rowsAffected == 0) {
-                // If no rows were affected, then there was an error with the update.
-                Toast.makeText(this, getString(R.string.editor_update_inventory_failed),
-                        Toast.LENGTH_SHORT).show();
-            } else {
-                // Otherwise, the update was successful and we can display a toast.
-                Toast.makeText(this, getString(R.string.editor_update_inventory_successful),
-                        Toast.LENGTH_SHORT).show();
-            }
         }
     }
 
@@ -487,6 +546,30 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         imageView.setImageURI(null);
     }
 
+    private void showDeleteConfirmationDialog(final long itemId) {
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
+        builder.setMessage(R.string.delete_message);
+        builder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                if (itemId == 0) {
+                    deleteAllRowsFromTable();
+                } else {
+                    deleteOneItemFromTable(itemId);
+                }
+                finish();
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
+            }
+        });
+        android.support.v7.app.AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
     /**
      * Show a dialog that warns the user there are unsaved changes that will be lost
      * if they continue leaving the editor.
@@ -516,61 +599,40 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         alertDialog.show();
     }
 
-    /**
-     * Prompt the user to confirm that they want to delete this Inventory.
-     */
-    private void showDeleteConfirmationDialog() {
-        // Create an AlertDialog.Builder and set the message, and click listeners
-        // for the postivie and negative buttons on the dialog.
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(R.string.delete_dialog_msg);
-        builder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                // User clicked the "Delete" button, so delete the Inventory.
-                deleteInventory();
-            }
-        });
-        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                // User clicked the "Cancel" button, so dismiss the dialog
-                // and continue editing the Inventory.
-                if (dialog != null) {
-                    dialog.dismiss();
-                }
-            }
-        });
 
-        // Create and show the AlertDialog
-        AlertDialog alertDialog = builder.create();
+    private void showOrderConfirmationDialog() {
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
+        builder.setMessage(R.string.order_message);
+        builder.setPositiveButton(R.string.phone, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // intent to phone
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                intent.setData(Uri.parse("tel:" + supplierPhoneEdit.getText().toString().trim()));
+                startActivity(intent);
+            }
+        });
+        builder.setNegativeButton(R.string.email, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // intent to email
+                Intent intent = new Intent(android.content.Intent.ACTION_SENDTO);
+                intent.setType("text/plain");
+                intent.setData(Uri.parse("mailto:" + supplierEmailEdit.getText().toString().trim()));
+                intent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Recurrent new order");
+                String bodyMessage = "Please send us as soon as possible more " +
+                        mNameEditText.getText().toString().trim() +
+                        "!!!";
+                intent.putExtra(android.content.Intent.EXTRA_TEXT, bodyMessage);
+                startActivity(intent);
+            }
+        });
+        android.support.v7.app.AlertDialog alertDialog = builder.create();
         alertDialog.show();
     }
-
     /**
      * Perform the deletion of the Inventory in the database.
      */
-    private void deleteInventory() {
-        // Only perform the delete if this is an existing Inventory.
-        if (mCurrentUri != null) {
-            // Call the ContentResolver to delete the Inventory at the given content URI.
-            // Pass in null for the selection and selection args because the mCurrentInventoryUri
-            // content URI already identifies the Inventory that we want.
-            int rowsDeleted = getContentResolver().delete(mCurrentUri, null, null);
-
-            // Show a toast message depending on whether or not the delete was successful.
-            if (rowsDeleted == 0) {
-                // If no rows were deleted, then there was an error with the delete.
-                Toast.makeText(this, getString(R.string.editor_delete_inventory_failed),
-                        Toast.LENGTH_SHORT).show();
-            } else {
-                // Otherwise, the delete was successful and we can display a toast.
-                Toast.makeText(this, getString(R.string.editor_delete_inventory_successful),
-                        Toast.LENGTH_SHORT).show();
-            }
-        }
 
         // Close the activity
-        finish();
-    }
 
 
     InventoryDbHelper dbHelper = new InventoryDbHelper(this);
@@ -587,6 +649,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 InventoryEntry.TABLE_NAME, selection, selectionArgs);
         return rowsDeleted;
     }
+
+
 
 
 

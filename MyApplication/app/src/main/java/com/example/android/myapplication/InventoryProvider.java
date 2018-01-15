@@ -8,22 +8,27 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
-import com.example.android.myapplication.InventoryContract.InventoryEntry;
 
-import java.security.Provider;
+import com.example.android.myapplication.InventoryContract.InventoryEntry;
 
 /**
  * Created by ceoyi on 12/28/2017.
  */
 
 public class InventoryProvider extends ContentProvider {
-    /** Tag for the log messages */
+    /**
+     * Tag for the log messages
+     */
     public static final String LOG_TAG = InventoryProvider.class.getSimpleName();
 
-    /** URI matcher code for the content URI for the INVENTORIES table */
+    /**
+     * URI matcher code for the content URI for the INVENTORIES table
+     */
     private static final int INVENTORIES = 100;
 
-    /** URI matcher code for the content URI for a single inventory in the INVENTORIES table */
+    /**
+     * URI matcher code for the content URI for a single inventory in the INVENTORIES table
+     */
     private static final int INVENTORY_ID = 101;
 
     /**
@@ -54,7 +59,9 @@ public class InventoryProvider extends ContentProvider {
         sUriMatcher.addURI(InventoryContract.CONTENT_AUTHORITY, InventoryContract.PATH_INVENTORIES + "/#", INVENTORY_ID);
     }
 
-    /** Database helper object */
+    /**
+     * Database helper object
+     */
     private InventoryDbHelper mDbHelper;
 
     @Override
@@ -92,7 +99,7 @@ public class InventoryProvider extends ContentProvider {
                 // arguments that will fill in the "?". Since we have 1 question mark in the
                 // selection, we have 1 String in the selection arguments' String array.
                 selection = InventoryEntry._ID + "=?";
-                selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
+                selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
 
                 // This will perform a query on the INVENTORIES table where the _id equals 3 to return a
                 // Cursor containing that row of the table.
@@ -189,7 +196,7 @@ public class InventoryProvider extends ContentProvider {
                 // so we know which row to update. Selection will be "_id=?" and selection
                 // arguments will be a String array containing the actual ID.
                 selection = InventoryEntry._ID + "=?";
-                selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
+                selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
                 return updateinventory(uri, contentValues, selection, selectionArgs);
             default:
                 throw new IllegalArgumentException("Update is not supported for " + uri);
@@ -222,9 +229,9 @@ public class InventoryProvider extends ContentProvider {
             }
         }
 
-        if (values.containsKey(InventoryEntry.COLUMN_INVENTORY_QUANTITY )) {
+        if (values.containsKey(InventoryEntry.COLUMN_INVENTORY_QUANTITY)) {
             // Check that the weight is greater than or equal to 0 kg
-            Integer quantity = values.getAsInteger(InventoryEntry.COLUMN_INVENTORY_QUANTITY );
+            Integer quantity = values.getAsInteger(InventoryEntry.COLUMN_INVENTORY_QUANTITY);
             if (quantity != null && quantity < 0) {
                 throw new IllegalArgumentException("inventory requires valid quantity");
             }
@@ -270,7 +277,7 @@ public class InventoryProvider extends ContentProvider {
             case INVENTORY_ID:
                 // Delete a single row given by the ID in the URI
                 selection = InventoryEntry._ID + "=?";
-                selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
+                selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
                 rowsDeleted = database.delete(InventoryEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             default:

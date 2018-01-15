@@ -9,6 +9,7 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -16,20 +17,20 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.support.design.widget.FloatingActionButton;
+
 import com.example.android.myapplication.InventoryContract.InventoryEntry;
+
 public class CatalogActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    private static final int INVENTORY_LOADER =0;
-
+    private static final int INVENTORY_LOADER = 0;
     InventoryCursorAdapter mCursorAdapter;
     InventoryDbHelper dbHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_catalog);
         dbHelper = new InventoryDbHelper(this);
-
         final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -38,7 +39,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
                 startActivity(intent);
             }
         });
-        // Find the ListView which will be populated with the pet data
+        // Find the ListView which will be populated with the inventory data
         ListView inventoryListView = (ListView) findViewById(R.id.list);
 
         // Find and set empty view on the ListView, so that it only shows when the list has 0 items.
@@ -55,17 +56,17 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
                 // Create new intent to go to {@link EditorActivity}
                 Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
 
-                // Form the content URI that represents the specific pet that was clicked on,
+                // Form the content URI that represents the specific inventory that was clicked on,
                 // by appending the "id" (passed as input to this method) onto the
-                // {@link PetEntry#CONTENT_URI}.
-                // For example, the URI would be "content://com.example.android.pets/pets/2"
-                // if the pet with ID 2 was clicked on.
-                Uri currentPetUri = ContentUris.withAppendedId(InventoryEntry.CONTENT_URI, id);
+                // {@link inventoryEntry#CONTENT_URI}.
+                // For example, the URI would be "content://com.example.android.inventorys/inventorys/2"
+                // if the inventory with ID 2 was clicked on.
+                Uri currentinventoryUri = ContentUris.withAppendedId(InventoryEntry.CONTENT_URI, id);
 
                 // Set the URI on the data field of the intent
-                intent.setData(currentPetUri);
+                intent.setData(currentinventoryUri);
 
-                // Launch the {@link EditorActivity} to display the data for the current pet.
+                // Launch the {@link EditorActivity} to display the data for the current inventory.
                 startActivity(intent);
             }
         });
@@ -75,11 +76,11 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
     }
 
     /**
-     * Helper method to insert hardcoded pet data into the database. For debugging purposes only.
+     * Helper method to insert hardcoded inventory data into the database. For debugging purposes only.
      */
     private void insertInventory() {
         // Create a ContentValues object where column names are the keys,
-        // and Toto's pet attributes are the values.
+        // and Toto's inventory attributes are the values.
         ContentValues values = new ContentValues();
         values.put(InventoryEntry.COLUMN_INVENTORY_NAME, "Toto");
         values.put(InventoryEntry.COLUMN_INVENTORY_PRICE, 30);
@@ -87,16 +88,16 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         values.put(InventoryEntry.COLUMN_SUPPLIER_NAME, "Char");
         values.put(InventoryEntry.COLUMN_SUPPLIER_PHONE, "3087881653");
         values.put(InventoryEntry.COLUMN_SUPPLIER_EMAIL, "hhee@gmail.com");
-        values.put(InventoryEntry.COLUMN_INVENTORY_IMAGE , "res\\drawable\\add.png");
+        values.put(InventoryEntry.COLUMN_INVENTORY_IMAGE, "android.resource://com.example.android.myapplication/drawable/surface");
         // Insert a new row for Toto into the provider using the ContentResolver.
-        // Use the {@link PetEntry#CONTENT_URI} to indicate that we want to insert
-        // into the pets database table.
+        // Use the {@link inventoryEntry#CONTENT_URI} to indicate that we want to insert
+        // into the inventorys database table.
         // Receive the new content URI that will allow us to access Toto's data in the future.
         Uri newUri = getContentResolver().insert(InventoryEntry.CONTENT_URI, values);
     }
 
     /**
-     * Helper method to delete all pets in the database.
+     * Helper method to delete all inventorys in the database.
      */
     private void deleteAllInventories() {
         int rowsDeleted = getContentResolver().delete(InventoryEntry.CONTENT_URI, null, null);
@@ -115,6 +116,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         super.onResume();
         mCursorAdapter.swapCursor(dbHelper.readStock());
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // User clicked on a menu option in the app bar overflow menu
@@ -140,8 +142,8 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
                 InventoryEntry.COLUMN_INVENTORY_PRICE,
                 InventoryEntry.COLUMN_INVENTORY_QUANTITY,
                 InventoryEntry.COLUMN_INVENTORY_IMAGE,
-                InventoryEntry.COLUMN_SUPPLIER_NAME ,
-                InventoryEntry.COLUMN_SUPPLIER_PHONE ,
+                InventoryEntry.COLUMN_SUPPLIER_NAME,
+                InventoryEntry.COLUMN_SUPPLIER_PHONE,
                 InventoryEntry.COLUMN_SUPPLIER_EMAIL
 
         };
@@ -157,7 +159,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        // Update {@link PetCursorAdapter} with this new cursor containing updated pet data
+        // Update {@link inventoryCursorAdapter} with this new cursor containing updated inventory data
         mCursorAdapter.swapCursor(data);
     }
 
