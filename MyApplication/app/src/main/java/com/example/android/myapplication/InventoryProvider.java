@@ -133,7 +133,19 @@ public class InventoryProvider extends ContentProvider {
         if (name == null) {
             throw new IllegalArgumentException("Inventory requires a name");
         }
+        String ImaUri = values.getAsString(InventoryEntry.COLUMN_INVENTORY_IMAGE);
+        if (ImaUri == null) {
+            throw new IllegalArgumentException("Inventory requires an image");
+        }
+        String Email = values.getAsString(InventoryEntry.COLUMN_SUPPLIER_EMAIL);
+        if (Email == null) {
+            throw new IllegalArgumentException("Inventory requires an Email");
+        }
 
+        Integer phone = values.getAsInteger(InventoryEntry.COLUMN_SUPPLIER_PHONE);
+        if (phone != null && phone < 0) {
+            throw new IllegalArgumentException("Inventory requires valid phone number");
+        }
 
         // If the weight is provided, check that it's greater than or equal to 0 kg
         Integer price = values.getAsInteger(InventoryEntry.COLUMN_INVENTORY_PRICE);

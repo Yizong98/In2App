@@ -42,37 +42,37 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 1;
     private static final int PICK_IMAGE_REQUEST = 0;
 
-    /** Content URI for the existing pet (null if it's a new pet) */
+    /** Content URI for the existing Inventory (null if it's a new Inventory) */
     private Uri mCurrentUri;
 
-    /** EditText field to enter the pet's name */
+    /** EditText field to enter the Inventory's name */
     private EditText mNameEditText;
 
-    /** EditText field to enter the pet's breed */
+    /** EditText field to enter the Inventory's price */
     private EditText mPriceEditText;
 
     EditText supplierNameEdit;
     EditText supplierPhoneEdit;
     EditText supplierEmailEdit;
 
-    ImageButton decreaseQuantity = (ImageButton) findViewById(R.id.decrease_quantity);
-    ImageButton increaseQuantity = (ImageButton) findViewById(R.id.increase_quantity);
+    ImageButton decreaseQuantity ;
+    ImageButton increaseQuantity ;
 
-    /** EditText field to enter the pet's gender */
+    /** EditText field to enter the Inventory's gender */
     private EditText mQuantityEditText;
 
-    /** Boolean flag that keeps track of whether the pet has been edited (true) or not (false) */
+    /** Boolean flag that keeps track of whether the Inventory has been edited (true) or not (false) */
     private boolean mInventoryHasChanged = false;
 
     ImageView imageView;
 
     Uri imageUri;
 
-    Button imageBtn = (Button) findViewById(R.id.select_image);
+    Button imageBtn;
 
     /**
      * OnTouchListener that listens for any user touches on a View, implying that they are modifying
-     * the view, and we change the mPetHasChanged boolean to true.
+     * the view, and we change the mInventoryHasChanged boolean to true.
      */
     private View.OnTouchListener mTouchListener = new View.OnTouchListener() {
         @Override
@@ -93,9 +93,12 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         mPriceEditText = (EditText) findViewById(R.id.price_edit);
         mQuantityEditText = (EditText) findViewById(R.id.quantity_edit);
         imageView= (ImageView) findViewById(R.id.image_view);
-        EditText supplierNameEdit=findViewById(R.id.supplier_name_edit);
-        EditText supplierPhoneEdit=findViewById(R.id.supplier_phone_edit);
-        EditText supplierEmailEdit=findViewById(R.id.supplier_email_edit);
+        supplierNameEdit=findViewById(R.id.supplier_name_edit);
+        supplierPhoneEdit=findViewById(R.id.supplier_phone_edit);
+        supplierEmailEdit=findViewById(R.id.supplier_email_edit);
+        decreaseQuantity = (ImageButton) findViewById(R.id.decrease_quantity);
+        increaseQuantity = (ImageButton) findViewById(R.id.increase_quantity);
+        imageBtn = (Button) findViewById(R.id.select_image);
 
         // Setup OnTouchListeners on all the input fields, so we can determine if the user
         // has touched or modified them. This will let us know if there are unsaved changes
@@ -108,24 +111,24 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         supplierEmailEdit.setOnTouchListener(mTouchListener);
 
         // Examine the intent that was used to launch this activity,
-        // in order to figure out if we're creating a new pet or editing an existing one.
+        // in order to figure out if we're creating a new Inventory or editing an existing one.
         Intent intent = getIntent();
         mCurrentUri = intent.getData();
 
-        // If the intent DOES NOT contain a pet content URI, then we know that we are
-        // creating a new pet.
+        // If the intent DOES NOT contain a Inventory content URI, then we know that we are
+        // creating a new Inventory.
         if (mCurrentUri == null) {
-            // This is a new pet, so change the app bar to say "Add a Pet"
+            // This is a new Inventory, so change the app bar to say "Add a Inventory"
             setTitle(getString(R.string.editor_activity_title_new_inventory));
 
             // Invalidate the options menu, so the "Delete" menu option can be hidden.
-            // (It doesn't make sense to delete a pet that hasn't been created yet.)
+            // (It doesn't make sense to delete a Inventory that hasn't been created yet.)
             invalidateOptionsMenu();
         } else {
-            // Otherwise this is an existing pet, so change app bar to say "Edit Pet"
+            // Otherwise this is an existing Inventory, so change app bar to say "Edit Inventory"
             setTitle(getString(R.string.editor_activity_title_edit_inventory));
 
-            // Initialize a loader to read the pet data from the database
+            // Initialize a loader to read the Inventory data from the database
             // and display the current values in the editor
             getLoaderManager().initLoader(EXISTING_INVENTORY_LOADER, null, this);
         }
@@ -190,6 +193,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         return true;
     }
 
+
     /**
      * This method is called after invalidateOptionsMenu(), so that the
      * menu can be updated (some menu items can be hidden or made visible).
@@ -197,7 +201,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-        // If this is a new pet, hide the "Delete" menu item.
+        // If this is a new Inventory, hide the "Delete" menu item.
         if (mCurrentUri == null) {
             MenuItem deleteOneItemMenuItem = menu.findItem(R.id.action_delete_item);
             MenuItem deleteAllMenuItem = menu.findItem(R.id.action_delete_all_data);
@@ -215,7 +219,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         switch (item.getItemId()) {
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
-                // Save pet to database
+                // Save Inventory to database
                 saveInventory();
                 // Exit activity
                 finish();
@@ -227,7 +231,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 return true;
             // Respond to a click on the "Up" arrow button in the app bar
             case android.R.id.home:
-                // If the pet hasn't changed, continue with navigating up to parent activity
+                // If the Inventory hasn't changed, continue with navigating up to parent activity
                 // which is the {@link CatalogActivity}.
                 if (!mInventoryHasChanged) {
                     NavUtils.navigateUpFromSameTask(EditorActivity.this);
@@ -295,16 +299,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
 
 
-    private boolean checkIfValueSet(EditText text, String description) {
-        if (TextUtils.isEmpty(text.getText())) {
-            text.setError("Missing product " + description);
-            return false;
-        } else {
-            text.setError(null);
-            return true;
-        }
-    }
-
 
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
         // The ACTION_OPEN_DOCUMENT intent was sent with the request code READ_REQUEST_CODE.
@@ -325,7 +319,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     }
 
     /**
-     * Get user input from editor and save pet into database.
+     * Get user input from editor and save Inventory into database.
      */
     private void saveInventory() {
         // Read from input fields
@@ -339,18 +333,18 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         String imageuri = imageUri.toString();
 
 
-        // Check if this is supposed to be a new pet
+        // Check if this is supposed to be a new Inventory
         // and check if all the fields in the editor are blank
         if (mCurrentUri == null &&
                 TextUtils.isEmpty(nameString) && TextUtils.isEmpty(quantityString) &&
-                TextUtils.isEmpty(priceString) && imageUri == null && TextUtils.isEmpty(imageuri)&&TextUtils.isEmpty(supplierNameString)&&TextUtils.isEmpty(supplierPhoneString)&&TextUtils.isEmpty(supplierEmailString)) {
-            // Since no fields were modified, we can return early without creating a new pet.
+                TextUtils.isEmpty(priceString) && imageUri==null&&TextUtils.isEmpty(supplierNameString)&&TextUtils.isEmpty(supplierPhoneString)&&TextUtils.isEmpty(supplierEmailString)) {
+            // Since no fields were modified, we can return early without creating a new Inventory.
             // No need to create ContentValues and no need to do any ContentProvider operations.
             return;
         }
 
         // Create a ContentValues object where column names are the keys,
-        // and pet attributes from the editor are the values.
+        // and Inventory attributes from the editor are the values.
         ContentValues values = new ContentValues();
         values.put(InventoryEntry.COLUMN_INVENTORY_NAME, nameString);
         values.put(InventoryEntry.COLUMN_INVENTORY_PRICE, priceString);
@@ -367,10 +361,10 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         }
         values.put(InventoryEntry.COLUMN_INVENTORY_QUANTITY , quantity);
 
-        // Determine if this is a new or existing pet by checking if mCurrentPetUri is null or not
+        // Determine if this is a new or existing Inventory by checking if mCurrentInventoryUri is null or not
         if (mCurrentUri == null) {
-            // This is a NEW pet, so insert a new pet into the provider,
-            // returning the content URI for the new pet.
+            // This is a NEW Inventory, so insert a new Inventory into the provider,
+            // returning the content URI for the new Inventory.
             Uri newUri = getContentResolver().insert(InventoryEntry.CONTENT_URI, values);
 
             // Show a toast message depending on whether or not the insertion was successful.
@@ -384,9 +378,9 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                         Toast.LENGTH_SHORT).show();
             }
         } else {
-            // Otherwise this is an EXISTING pet, so update the pet with content URI: mCurrentPetUri
+            // Otherwise this is an EXISTING Inventory, so update the Inventory with content URI: mCurrentInventoryUri
             // and pass in the new ContentValues. Pass in null for the selection and selection args
-            // because mCurrentPetUri will already identify the correct row in the database that
+            // because mCurrentInventoryUri will already identify the correct row in the database that
             // we want to modify.
             int rowsAffected = getContentResolver().update(mCurrentUri, values, null, null);
 
@@ -411,7 +405,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
      */
 
     public void onBackPressed() {
-        // If the pet hasn't changed, continue with handling back button press
+        // If the Inventory hasn't changed, continue with handling back button press
         if (!mInventoryHasChanged) {
             super.onBackPressed();
             return;
@@ -434,8 +428,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        // Since the editor shows all pet attributes, define a projection that contains
-        // all columns from the pet table
+        // Since the editor shows all Inventory attributes, define a projection that contains
+        // all columns from the Inventory table
         String[] projection = {
                 InventoryEntry._ID,
                 InventoryEntry.COLUMN_INVENTORY_NAME,
@@ -445,7 +439,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
         // This loader will execute the ContentProvider's query method on a background thread
         return new CursorLoader(this,   // Parent activity context
-                mCurrentUri,         // Query the content URI for the current pet
+                mCurrentUri,         // Query the content URI for the current Inventory
                 projection,             // Columns to include in the resulting Cursor
                 null,                   // No selection clause
                 null,                   // No selection arguments
@@ -462,7 +456,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         // Proceed with moving to the first row of the cursor and reading data from it
         // (This should be the only row in the cursor)
         if (cursor.moveToFirst()) {
-            // Find the columns of pet attributes that we're interested in
+            // Find the columns of Inventory attributes that we're interested in
             int nameColumnIndex = cursor.getColumnIndex(InventoryEntry.COLUMN_INVENTORY_NAME);
             int priceColumnIndex = cursor.getColumnIndex(InventoryEntry.COLUMN_INVENTORY_PRICE);
             int imageColumnIndex = cursor.getColumnIndex(InventoryEntry.COLUMN_INVENTORY_IMAGE);
@@ -510,7 +504,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         builder.setNegativeButton(R.string.keep_editing, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 // User clicked the "Keep editing" button, so dismiss the dialog
-                // and continue editing the pet.
+                // and continue editing the Inventory.
                 if (dialog != null) {
                     dialog.dismiss();
                 }
@@ -523,7 +517,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     }
 
     /**
-     * Prompt the user to confirm that they want to delete this pet.
+     * Prompt the user to confirm that they want to delete this Inventory.
      */
     private void showDeleteConfirmationDialog() {
         // Create an AlertDialog.Builder and set the message, and click listeners
@@ -532,14 +526,14 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         builder.setMessage(R.string.delete_dialog_msg);
         builder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                // User clicked the "Delete" button, so delete the pet.
+                // User clicked the "Delete" button, so delete the Inventory.
                 deleteInventory();
             }
         });
         builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 // User clicked the "Cancel" button, so dismiss the dialog
-                // and continue editing the pet.
+                // and continue editing the Inventory.
                 if (dialog != null) {
                     dialog.dismiss();
                 }
@@ -552,14 +546,14 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     }
 
     /**
-     * Perform the deletion of the pet in the database.
+     * Perform the deletion of the Inventory in the database.
      */
     private void deleteInventory() {
-        // Only perform the delete if this is an existing pet.
+        // Only perform the delete if this is an existing Inventory.
         if (mCurrentUri != null) {
-            // Call the ContentResolver to delete the pet at the given content URI.
-            // Pass in null for the selection and selection args because the mCurrentPetUri
-            // content URI already identifies the pet that we want.
+            // Call the ContentResolver to delete the Inventory at the given content URI.
+            // Pass in null for the selection and selection args because the mCurrentInventoryUri
+            // content URI already identifies the Inventory that we want.
             int rowsDeleted = getContentResolver().delete(mCurrentUri, null, null);
 
             // Show a toast message depending on whether or not the delete was successful.

@@ -94,4 +94,6 @@ public class InventoryDbHelper extends SQLiteOpenHelper {
         );
         return cursor;
     }
+
+
 }

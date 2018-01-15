@@ -87,7 +87,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         values.put(InventoryEntry.COLUMN_SUPPLIER_NAME, "Char");
         values.put(InventoryEntry.COLUMN_SUPPLIER_PHONE, "3087881653");
         values.put(InventoryEntry.COLUMN_SUPPLIER_EMAIL, "hhee@gmail.com");
-        values.put(InventoryEntry.COLUMN_INVENTORY_IMAGE , "drawable/empty.jpeg");
+        values.put(InventoryEntry.COLUMN_INVENTORY_IMAGE , "res\\drawable\\add.png");
         // Insert a new row for Toto into the provider using the ContentResolver.
         // Use the {@link PetEntry#CONTENT_URI} to indicate that we want to insert
         // into the pets database table.
