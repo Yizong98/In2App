@@ -24,13 +24,11 @@ public class InventoryCursorAdapter extends CursorAdapter {
     }
 
     /**
-     * This method binds the pet data (in the current row pointed to by cursor) to the given
-     * list item layout. For example, the name for the current pet can be set on the name TextView
+     * This method binds the inventory data (in the current row pointed to by cursor) to the given
+     * list item layout. For example, the name for the current inventory can be set on the name TextView
      * in the list item layout.
      */
-    public InventoryCursorAdapter(Context context, Cursor c) {
-        super(context, c, 0 /* flags */);
-    }
+
 
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
         // Inflate a list item view using the layout specified in list_item.xml
@@ -47,7 +45,7 @@ public class InventoryCursorAdapter extends CursorAdapter {
         ImageView image = (ImageView) view.findViewById(R.id.image_view);
 
 
-        String name = cursor.getString(cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_SUPPLIER_NAME));
+        String name = cursor.getString(cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_NAME));
         final int quantity = cursor.getInt(cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_QUANTITY));
         String price = cursor.getString(cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_PRICE));
 
